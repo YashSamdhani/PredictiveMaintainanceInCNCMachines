@@ -1,0 +1,66 @@
+{
+  "dashboard": {
+    "name": "Predictive Maintenance Dashboard",
+    "description": "Visualizes data and predictions for maintenance analysis.",
+    "layout": [
+      {
+        "type": "fileUpload",
+        "id": "upload_csv",
+        "label": "Upload CSV File",
+        "acceptedFiles": [".csv"]
+      },
+      {
+        "type": "fileUpload",
+        "id": "upload_model",
+        "label": "Upload Model File",
+        "acceptedFiles": [".pkl"]
+      },
+      {
+        "type": "table",
+        "id": "data_table",
+        "source": "uploaded_csv",
+        "label": "Preview Data"
+      },
+      {
+        "type": "graph",
+        "id": "data_graphs",
+        "label": "Visualize Data",
+        "source": "uploaded_csv",
+        "config": {
+          "type": "multiple",
+          "graphs": [
+            {
+              "type": "bar",
+              "x": "column_name_1",
+              "y": "column_name_2",
+              "title": "Bar Chart Example"
+            },
+            {
+              "type": "line",
+              "x": "column_name_3",
+              "y": "column_name_4",
+              "title": "Line Chart Example"
+            }
+          ]
+        }
+      },
+      {
+        "type": "actionButton",
+        "id": "run_model",
+        "label": "Run Model"
+      },
+      {
+        "type": "graph",
+        "id": "model_output_graph",
+        "label": "Model Predictions",
+        "source": "model_output",
+        "config": {
+          "type": "bar",
+          "x": "index",
+          "y": "predicted_values",
+          "title": "Model Predictions"
+        }
+      }
+    ]
+  }
+}
