@@ -10,6 +10,11 @@ import plotly.graph_objs as go
 import numpy as np
 import json
 
+# MQTT Configuration
+MQTT_BROKER = "test.mosquitto.org"
+MQTT_PORT = 1883
+MQTT_TOPIC = "sensor/data"
+
 # File Paths
 test_csv_path = "E:/test.csv"
 data_csv_path = "E:/data.csv"
@@ -19,28 +24,28 @@ model_path = "E:/model.pkl"
 data_df = pd.read_csv(data_csv_path)
 max_tool_wear = data_df['tool_wear'].max()
 
-topic = "sensor/data"
+def on_connect(client, userdata, flags, rc):
+    print("Connected to MQTT Broker!" if rc == 0 else f"Failed to connect, return code {rc}")
 
-# MQTT Server (Broker)
+# MQTT Server
 class MQTTServer:
     def __init__(self):
         self.client = mqtt.Client()
+        self.client.on_connect = on_connect
+        self.client.connect(MQTT_BROKER, MQTT_PORT, 60)
         self.data = pd.read_csv(test_csv_path)
         self.start_time = time.time()
         self.total_data_sent = 0
-        self.client.on_connect = self.on_connect
-
-    def on_connect(self, client, userdata, flags, rc):
-        print("MQTT Broker Connected")
 
     def start(self):
-        self.client.connect("localhost", 1883, 60)
         self.client.loop_start()
         try:
-            for _, row in self.data.iterrows():
-                self.client.publish(topic, json.dumps(row.to_dict()))
-                self.total_data_sent += 1
-                time.sleep(1)
+            while True:
+                for _, row in self.data.iterrows():
+                    payload = row.to_json()
+                    self.client.publish(MQTT_TOPIC, payload)
+                    self.total_data_sent += 1
+                    time.sleep(1)
         finally:
             self.client.loop_stop()
 
@@ -53,29 +58,27 @@ class MQTTServer:
             "Data Transfer Rate (rows/sec)": round(data_rate, 2)
         }
 
-# MQTT Client with Dashboard
+# MQTT Client
 class MQTTClient:
     def __init__(self):
         self.client = mqtt.Client()
+        self.client.on_connect = on_connect
+        self.client.on_message = self.on_message
+        self.client.connect(MQTT_BROKER, MQTT_PORT, 60)
         self.model = joblib.load(model_path)
-        self.data = pd.read_csv(test_csv_path)
-        self.received_data = {col: [] for col in self.data.columns}
+        self.received_data = {col: [] for col in pd.read_csv(test_csv_path).columns}
         self.model_outputs = []
         self.latency_measurements = []
-        self.client.on_message = self.on_message
-        self.client.on_connect = self.on_connect
-
-    def on_connect(self, client, userdata, flags, rc):
-        print("MQTT Client Connected")
-        self.client.subscribe(topic)
-
+        self.client.subscribe(MQTT_TOPIC)
+        self.client.loop_start()
+    
     def on_message(self, client, userdata, msg):
         start_time = time.time()
         row = json.loads(msg.payload.decode())
         latency = time.time() - start_time
         self.latency_measurements.append(latency)
-        for col in self.data.columns:
-            self.received_data[col].append(row[col])
+        for col, value in row.items():
+            self.received_data[col].append(value)
         
         # Model prediction
         df_row = pd.DataFrame([row])
@@ -99,7 +102,7 @@ class MQTTClient:
         )
         def update_graphs(_):
             graphs = []
-            for col in self.data.columns:
+            for col in self.received_data.keys():
                 graphs.append(dcc.Graph(
                     figure={
                         'data': [go.Scatter(y=self.received_data[col], mode='lines', name=col)],
@@ -126,30 +129,20 @@ class MQTTClient:
         
         app.run_server(debug=True)
 
-# Server Comparison Analysis
-def compare_servers(mqtt_stats, latency):
-    comparison = {
-        "MQTT": {"Latency (s)": latency, "Data Rate (rows/sec)": mqtt_stats["Data Transfer Rate (rows/sec)"], "Security": "Moderate"}
-    }
-    print("\nServer Comparison Analysis:")
-    for server, metrics in comparison.items():
-        print(f"{server}: Latency={metrics['Latency (s)']}s, Data Rate={metrics['Data Rate (rows/sec)']} rows/sec, Security={metrics['Security']}")
-
 if __name__ == "__main__":
     server = MQTTServer()
     client = MQTTClient()
     
     server_thread = threading.Thread(target=server.start)
-    client_thread = threading.Thread(target=client.client.loop_forever)
     dashboard_thread = threading.Thread(target=client.start_dashboard)
     
     server_thread.start()
-    time.sleep(2)  # Give time for server to start
-    client.client.connect("localhost", 1883, 60)
-    client_thread.start()
+    time.sleep(2)  # Allow time for server to start
     dashboard_thread.start()
     
     time.sleep(5)  # Allow some data transfer before analysis
     mqtt_stats = server.get_statistics()
     avg_latency = client.get_average_latency()
-    compare_servers(mqtt_stats, avg_latency)
+    
+    print("\nServer Comparison Analysis:")
+    print(f"MQTT: Latency={avg_latency}s, Data Rate={mqtt_stats['Data Transfer Rate (rows/sec)']} rows/sec, Security=Moderate")
