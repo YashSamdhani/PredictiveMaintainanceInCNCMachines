@@ -113,6 +113,23 @@ These studies provide the foundation for selecting appropriate tools and techniq
 
 ---
 
+## Dashboard Development
+
+### Initial Trials with Node-RED
+- **Challenges:** Persistent database connectivity issues (e.g., MySQL error “getaddrinfo ENOTFOUND”) and performance instability led to frequent crashes and memory leaks.
+
+### Transition to Python Dash
+- **Design:**
+  - A dark-themed UI with clear headers and dynamic graphs.
+  - Real-time updates using automated callbacks.
+- **Key Features:**
+  - Dynamic Graphs: Time-series plots for various sensor measurements.
+  - Gauge Indicator: Visualizes the severity of tool wear with color-coded alerts (green, yellow, red).
+  - Interactivity: Continuous updating ensures operators have immediate, actionable insights.
+- **Outcome:** A stable, flexible, and customizable dashboard that integrates seamlessly with the predictive model.
+
+---
+
 ## Networking and Data Transfer
 
 ### Protocols Evaluated
