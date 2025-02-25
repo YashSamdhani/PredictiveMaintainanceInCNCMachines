@@ -18,11 +18,6 @@ Under the Guidance of: **Prof. Dr. Christoph Reich**
 - [Dashboard Development](#dashboard-development)
 - [Networking and Data Transfer](#networking-and-data-transfer)
 - [Future Work](#future-work)
-- [Conclusion](#conclusion)
-- [Bibliography](#bibliography)
-- [Installation and Usage](#installation-and-usage)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
 
 ---
 
@@ -146,16 +141,3 @@ These studies provide the foundation for selecting appropriate tools and techniq
 - **Dashboard Enhancements:** Add augmented reality (AR) interfaces and mobile-friendly designs.
 - **Optimizing Communication:** Investigate hybrid protocols and deploy distributed data processing.
 
----
-
-## Installation and Usage
-
-### Prerequisites
-- Python 3.x
-- Required libraries as listed in `requirements.txt` (TensorFlow, Pandas, Scikit-learn, Plotly Dash, etc.)
-
-### Setup
-1. **Clone the Repository:**
-   ```bash
-   git clone https://github.com/yourusername/predictive-maintenance-cnc.git
-   cd predictive-maintenance-cnc
